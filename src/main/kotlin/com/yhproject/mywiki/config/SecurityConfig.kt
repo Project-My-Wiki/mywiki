@@ -29,7 +29,7 @@ class SecurityConfig(
             .headers { it.frameOptions { frameOptions -> frameOptions.disable() } }
             .authorizeHttpRequests {
                 it
-                    .requestMatchers("/", "/css/**", "/images/**", "/js/**", "/h2-console/**", "/error").permitAll()
+                    .requestMatchers("/", "/css/**", "/images/**", "/js/**", "/h2-console/**", "/error", "/actuator/**").permitAll()
                     .requestMatchers("/api/**").hasRole("USER")
                     .anyRequest().authenticated()
             }

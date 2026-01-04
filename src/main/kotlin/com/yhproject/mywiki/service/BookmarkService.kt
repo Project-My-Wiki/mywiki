@@ -6,17 +6,19 @@ import com.yhproject.mywiki.domain.summary.SummaryRepository
 import com.yhproject.mywiki.domain.user.UserRepository
 import com.yhproject.mywiki.dto.BookmarkCreateRequest
 import com.yhproject.mywiki.dto.BookmarkSlice
+import com.yhproject.mywiki.metrics.MetricsFacade
 import io.github.oshai.kotlinlogging.KotlinLogging
+import java.time.LocalDateTime
 import org.jsoup.Jsoup
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.LocalDateTime
 
 @Service
 class BookmarkService(
-    private val bookmarkRepository: BookmarkRepository,
-    private val userRepository: UserRepository,
-    private val summaryRepository: SummaryRepository
+        private val bookmarkRepository: BookmarkRepository,
+        private val userRepository: UserRepository,
+        private val summaryRepository: SummaryRepository,
+        private val metrics: MetricsFacade
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -27,15 +29,18 @@ class BookmarkService(
         // REFACTOR: 성능 이슈가 있으면 비동기로 전환
         val documentMetadata = getDocumentMetadata(request.url)
 
-        val bookmark = Bookmark(
-            userId = userId,
-            url = request.url,
-            title = documentMetadata.title,
-            description = documentMetadata.description,
-            image = documentMetadata.image
-        )
+        val bookmark =
+                Bookmark(
+                        userId = userId,
+                        url = request.url,
+                        title = documentMetadata.title,
+                        description = documentMetadata.description,
+                        image = documentMetadata.image
+                )
 
-        return bookmarkRepository.save(bookmark)
+        val savedBookmark = bookmarkRepository.save(bookmark)
+        metrics.incrementBookmarkCreated()
+        return savedBookmark
     }
 
     @Transactional(readOnly = true)
@@ -52,10 +57,13 @@ class BookmarkService(
     @Transactional(readOnly = true)
     fun getBookmark(bookmarkId: Long, userId: Long): Bookmark {
         validateUserExists(userId)
-        val bookmark = bookmarkRepository.findById(bookmarkId)
-            ?: throw IllegalArgumentException("Bookmark not found: $bookmarkId")
+        val bookmark =
+                bookmarkRepository.findById(bookmarkId)
+                        ?: throw IllegalArgumentException("Bookmark not found: $bookmarkId")
         if (bookmark.userId != userId) {
-            throw IllegalAccessException("User $userId does not have permission for this bookmark: $bookmarkId")
+            throw IllegalAccessException(
+                    "User $userId does not have permission for this bookmark: $bookmarkId"
+            )
         }
         return bookmark
     }
@@ -64,17 +72,24 @@ class BookmarkService(
     fun getRandomBookmark(userId: Long): Bookmark {
         validateUserExists(userId)
         return bookmarkRepository.findRandomByUserId(userId)
-            ?: throw NoSuchElementException("사용자의 북마크가 존재하지 않습니다. (userId: $userId)")
+                ?: throw NoSuchElementException("사용자의 북마크가 존재하지 않습니다. (userId: $userId)")
     }
 
     @Transactional
     fun updateReadStatus(bookmarkId: Long, userId: Long, read: Boolean): Bookmark {
         validateUserExists(userId)
-        val bookmark = bookmarkRepository.findByIdAndUserId(bookmarkId, userId)
-            ?: throw IllegalArgumentException("Bookmark not found with id: $bookmarkId for user: $userId")
+        val bookmark =
+                bookmarkRepository.findByIdAndUserId(bookmarkId, userId)
+                        ?: throw IllegalArgumentException(
+                                "Bookmark not found with id: $bookmarkId for user: $userId"
+                        )
 
         bookmark.readAt = if (read) LocalDateTime.now() else null
         bookmark.updatedAt = LocalDateTime.now()
+
+        val status = if (read) "read" else "unread"
+        metrics.incrementBookmarkRead(status)
+
         return bookmarkRepository.save(bookmark)
     }
 
@@ -95,39 +110,46 @@ class BookmarkService(
     private fun getDocumentMetadata(url: String): DocumentMetadata {
         // url에 해당하는 html을 get 하여 metadata를 조회
         // title, description, image 메타데이터 획득
+        val startTime = System.nanoTime()
         try {
-            val doc = Jsoup.connect(url)
-                .timeout(5000) // 5초 타임아웃
-                .get()
+            val doc =
+                    Jsoup.connect(url)
+                            .timeout(5000) // 5초 타임아웃
+                            .get()
 
             // 1. Open Graph 태그 우선 조회
-            val title = doc.select("meta[property=og:title]").attr("content").ifEmpty {
-                // 2. og:title이 없으면 <title> 태그 조회
-                doc.title()
-            }
-            val description = doc.select("meta[property=og:description]").attr("content").ifEmpty {
-                // 3. og:description이 없으면 <meta name="description"> 조회
-                doc.select("meta[name=description]").attr("content")
-            }
+            val title =
+                    doc.select("meta[property=og:title]").attr("content").ifEmpty {
+                        // 2. og:title이 없으면 <title> 태그 조회
+                        doc.title()
+                    }
+            val description =
+                    doc.select("meta[property=og:description]").attr("content").ifEmpty {
+                        // 3. og:description이 없으면 <meta name="description"> 조회
+                        doc.select("meta[name=description]").attr("content")
+                    }
             val image = doc.select("meta[property=og:image]").attr("content")
 
+            val duration = System.nanoTime() - startTime
+            metrics.recordMetadataFetchDuration("success", duration)
+
             return DocumentMetadata(
-                // 만약 제목이 비어있다면 URL을 기본값으로 사용
-                title = title.ifEmpty { url },
-                description = description,
-                image = image
+                    // 만약 제목이 비어있다면 URL을 기본값으로 사용
+                    title = title.ifEmpty { url },
+                    description = description,
+                    image = image
             )
         } catch (e: Exception) {
             logger.error { "Error fetching metadata from url: $url, error: ${e.message}" }
+            val duration = System.nanoTime() - startTime
+            metrics.recordMetadataFetchDuration("failure", duration)
+            metrics.incrementMetadataFetchErrors()
+
             // 메타데이터 조회 실패 시, URL을 제목으로 하는 기본 데이터를 반환
             // REFACTOR: 일시적인 조회 실패라면? 나중에라도 데이터를 넣고 싶다면 어느 시점에 재시도할 것인가?
             return DocumentMetadata(title = url, description = "", image = "")
         }
     }
 
-    data class DocumentMetadata(
-        val title: String,
-        val description: String,
-        val image: String
-    )
+    data class DocumentMetadata(val title: String, val description: String, val image: String)
 }
