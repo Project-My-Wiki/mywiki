@@ -41,3 +41,6 @@ application-local.yml
 
 ### Test ###
 http/
+
+### log ###
+logs/

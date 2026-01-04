@@ -33,6 +33,19 @@ spring:
               - profile
               - email
 
+logging:
+  file:
+    name: ./logs/spring.log
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ["prometheus", "health"]
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
 app:
   oauth2:
     redirect-uri: ${OAUTH2_REDIRECT_URI:http://localhost:3000}
