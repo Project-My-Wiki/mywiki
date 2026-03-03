@@ -2,6 +2,7 @@ package com.yhproject.mywiki.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.yhproject.mywiki.auth.CustomOAuth2UserService
+import com.yhproject.mywiki.auth.JwtProvider
 import com.yhproject.mywiki.auth.WithMockCustomUser
 import com.yhproject.mywiki.config.SecurityConfig
 import org.junit.jupiter.api.DisplayName
@@ -18,24 +19,20 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 @Import(SecurityConfig::class)
 class UserControllerTest {
 
-    @Autowired
-    private lateinit var mockMvc: MockMvc
+    @Autowired private lateinit var mockMvc: MockMvc
 
-    @Autowired
-    private lateinit var objectMapper: ObjectMapper
+    @Autowired private lateinit var objectMapper: ObjectMapper
 
-    @MockitoBean
-    private lateinit var customOAuth2UserService: CustomOAuth2UserService
+    @MockitoBean private lateinit var jwtProvider: JwtProvider
+
+    @MockitoBean private lateinit var customOAuth2UserService: CustomOAuth2UserService
 
     @Test
     @WithMockCustomUser(role = "USER")
     @DisplayName("내 정보를 요청하면 세션에 저장된 사용자 정보를 반환한다")
     fun `getMyInfo returns user info from session`() {
         // when & then
-        mockMvc.perform(
-            get("/api/user/me")
-        )
-            .andExpect(status().isOk)
+        mockMvc.perform(get("/api/user/me")).andExpect(status().isOk)
     }
 
     @Test
@@ -43,6 +40,6 @@ class UserControllerTest {
     fun `getMyInfo returns null if no user in session`() {
         // when & then
         mockMvc.perform(get("/api/user/me")) // 세션 없이 호출
-            .andExpect(status().isUnauthorized)
+                .andExpect(status().isUnauthorized)
     }
 }
