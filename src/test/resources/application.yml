@@ -27,3 +27,6 @@ app:
     redirect-uri: http://localhost:3000
   cors:
     allowed-origins: http://localhost:3000
+  jwt:
+    secret: mywiki-test-secret-key-must-be-at-least-256-bits-long
+    expiration: 3600000

@@ -1,14 +1,19 @@
 package com.yhproject.mywiki.config
 
 import com.yhproject.mywiki.auth.CustomOAuth2UserService
+import com.yhproject.mywiki.auth.JwtAuthenticationFilter
+import com.yhproject.mywiki.auth.JwtProvider
+import com.yhproject.mywiki.auth.PrincipalDetails
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpStatus
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
+import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource
@@ -16,40 +21,53 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 @Configuration
 @EnableWebSecurity
 class SecurityConfig(
-    private val customOAuth2UserService: CustomOAuth2UserService,
-    @Value("\${app.oauth2.redirect-uri}") private val redirectUri: String,
-    @Value("\${app.cors.allowed-origins}") private val allowedOrigins: String
+        private val customOAuth2UserService: CustomOAuth2UserService,
+        private val jwtProvider: JwtProvider,
+        @Value("\${app.oauth2.redirect-uri}") private val redirectUri: String,
+        @Value("\${app.cors.allowed-origins}") private val allowedOrigins: String
 ) {
 
     @Bean
     fun filterChain(http: HttpSecurity): SecurityFilterChain {
         http
-            .cors { it.configurationSource(corsConfigurationSource()) }
-            .csrf { it.disable() }
-            .headers { it.frameOptions { frameOptions -> frameOptions.disable() } }
-            .authorizeHttpRequests {
-                it
-                    .requestMatchers("/", "/css/**", "/images/**", "/js/**", "/h2-console/**", "/error", "/actuator/**").permitAll()
-                    .requestMatchers("/api/**").hasRole("USER")
-                    .anyRequest().authenticated()
-            }
-            .logout { it.logoutSuccessUrl("/") }
-            .oauth2Login { oauth2 ->
-                oauth2.userInfoEndpoint { userInfo ->
-                    userInfo.userService(customOAuth2UserService)
+                .cors { it.configurationSource(corsConfigurationSource()) }
+                .csrf { it.disable() }
+                .headers { it.frameOptions { frameOptions -> frameOptions.disable() } }
+                .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
+                .authorizeHttpRequests {
+                    it.requestMatchers(
+                                    "/",
+                                    "/css/**",
+                                    "/images/**",
+                                    "/js/**",
+                                    "/h2-console/**",
+                                    "/error",
+                                    "/actuator/**",
+                                    "/api/auth/login"
+                            )
+                            .permitAll()
+                            .requestMatchers("/api/**")
+                            .hasRole("USER")
+                            .anyRequest()
+                            .authenticated()
                 }
-                oauth2.successHandler(oauth2LoginSuccessHandler())
-            }
-            .exceptionHandling { handler ->
-                handler.defaultAuthenticationEntryPointFor(
-                    { _, response, _ ->
-                        response.status = HttpStatus.UNAUTHORIZED.value()
-                    },
-                    { request ->
-                        request.requestURI.startsWith("/api/")
-                    }
+                .addFilterBefore(
+                        JwtAuthenticationFilter(jwtProvider),
+                        UsernamePasswordAuthenticationFilter::class.java
                 )
-            }
+                .logout { it.logoutSuccessUrl("/") }
+                .oauth2Login { oauth2 ->
+                    oauth2.userInfoEndpoint { userInfo ->
+                        userInfo.userService(customOAuth2UserService)
+                    }
+                    oauth2.successHandler(oauth2LoginSuccessHandler())
+                }
+                .exceptionHandling { handler ->
+                    handler.defaultAuthenticationEntryPointFor(
+                            { _, response, _ -> response.status = HttpStatus.UNAUTHORIZED.value() },
+                            { request -> request.requestURI.startsWith("/api/") }
+                    )
+                }
 
         return http.build()
     }
@@ -68,8 +86,16 @@ class SecurityConfig(
 
     @Bean
     fun oauth2LoginSuccessHandler(): AuthenticationSuccessHandler {
-        return AuthenticationSuccessHandler { _, response, _ ->
-            response.sendRedirect(redirectUri)
+        return AuthenticationSuccessHandler { _, response, authentication ->
+            val principal = authentication.principal as PrincipalDetails
+            val token =
+                    jwtProvider.generateToken(
+                            id = principal.user.id,
+                            name = principal.user.name,
+                            email = principal.user.email,
+                            role = principal.user.role.key
+                    )
+            response.sendRedirect("$redirectUri?token=$token")
         }
     }
 }

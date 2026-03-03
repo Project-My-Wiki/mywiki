@@ -2,6 +2,7 @@ package com.yhproject.mywiki.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.yhproject.mywiki.auth.CustomOAuth2UserService
+import com.yhproject.mywiki.auth.JwtProvider
 import com.yhproject.mywiki.auth.WithMockCustomUser
 import com.yhproject.mywiki.config.SecurityConfig
 import com.yhproject.mywiki.domain.bookmark.Bookmark
@@ -30,39 +31,39 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 @Import(SecurityConfig::class)
 class SummaryControllerTest {
 
-    @Autowired
-    private lateinit var mockMvc: MockMvc
+    @Autowired private lateinit var mockMvc: MockMvc
 
-    @Autowired
-    private lateinit var objectMapper: ObjectMapper
+    @Autowired private lateinit var objectMapper: ObjectMapper
 
-    @MockitoBean
-    private lateinit var summaryService: SummaryService
+    @MockitoBean private lateinit var summaryService: SummaryService
 
-    @MockitoBean
-    private lateinit var customOAuth2UserService: CustomOAuth2UserService
+    @MockitoBean private lateinit var jwtProvider: JwtProvider
 
-    private fun createTestBookmark(id: Long, userId: Long) = Bookmark(
-        id = id,
-        userId = userId,
-        url = "https://example.com/$id",
-        title = "Test Title $id",
-        description = "Test Description $id",
-        image = "image$id.png"
-    )
+    @MockitoBean private lateinit var customOAuth2UserService: CustomOAuth2UserService
 
-    private fun createTestSummary(id: Long, bookmark: Bookmark, contents: SummaryContents) = Summary(
-        id = id,
-        bookmark = bookmark,
-        contents = contents,
-    )
+    private fun createTestBookmark(id: Long, userId: Long) =
+            Bookmark(
+                    id = id,
+                    userId = userId,
+                    url = "https://example.com/$id",
+                    title = "Test Title $id",
+                    description = "Test Description $id",
+                    image = "image$id.png"
+            )
 
-    private fun createTestTemplate(id: Long, section: SummaryTemplateSection, title: String, description: String?) = SummaryTemplate(
-        id = id,
-        section = section,
-        title = title,
-        description = description
-    )
+    private fun createTestSummary(id: Long, bookmark: Bookmark, contents: SummaryContents) =
+            Summary(
+                    id = id,
+                    bookmark = bookmark,
+                    contents = contents,
+            )
+
+    private fun createTestTemplate(
+            id: Long,
+            section: SummaryTemplateSection,
+            title: String,
+            description: String?
+    ) = SummaryTemplate(id = id, section = section, title = title, description = description)
 
     @Test
     @WithMockCustomUser(role = "USER")
@@ -75,9 +76,15 @@ class SummaryControllerTest {
         val request = SummaryCreateRequest(bookmarkId = bookmarkId, contents = testContentItems)
         val bookmark = createTestBookmark(bookmarkId, userId)
         val summary = createTestSummary(1L, bookmark, SummaryContents(testContentItems))
-        val templates = listOf(
-            createTestTemplate(1, SummaryTemplateSection.BIG_PICTURE, "이 글을 한 문장으로 요약하자면?", "이 글이 소개하고자 했던 개념, 해결하고자 했던 문제 등을 하나의 문장으로 정리해보세요.")
-        )
+        val templates =
+                listOf(
+                        createTestTemplate(
+                                1,
+                                SummaryTemplateSection.BIG_PICTURE,
+                                "이 글을 한 문장으로 요약하자면?",
+                                "이 글이 소개하고자 했던 개념, 해결하고자 했던 문제 등을 하나의 문장으로 정리해보세요."
+                        )
+                )
         val response = SummaryResponse.from(summary, templates)
 
         whenever(summaryService.createSummary(any(), any())).thenReturn(summary)
@@ -85,12 +92,12 @@ class SummaryControllerTest {
 
         // when & then
         mockMvc.perform(
-            post("/api/summaries")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request))
-        )
-            .andExpect(status().isCreated)
-            .andExpect(content().json(objectMapper.writeValueAsString(response)))
+                        post("/api/summaries")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isCreated)
+                .andExpect(content().json(objectMapper.writeValueAsString(response)))
 
         verify(summaryService).createSummary(any(), any())
         verify(summaryService).getSummaryTemplates()
@@ -104,13 +111,20 @@ class SummaryControllerTest {
         val userId = 1L
         val summaryId = 1L
         val bookmarkId = 1L
-        val testContentItems = listOf(SummaryContentItem(id = 1, content = "Updated summary content"))
+        val testContentItems =
+                listOf(SummaryContentItem(id = 1, content = "Updated summary content"))
         val request = UpdateSummaryRequest(contents = testContentItems)
         val bookmark = createTestBookmark(bookmarkId, userId)
         val summary = createTestSummary(summaryId, bookmark, SummaryContents(testContentItems))
-        val templates = listOf(
-            createTestTemplate(1, SummaryTemplateSection.BIG_PICTURE, "이 글을 한 문장으로 요약하자면?", "이 글이 소개하고자 했던 개념, 해결하고자 했던 문제 등을 하나의 문장으로 정리해보세요.")
-        )
+        val templates =
+                listOf(
+                        createTestTemplate(
+                                1,
+                                SummaryTemplateSection.BIG_PICTURE,
+                                "이 글을 한 문장으로 요약하자면?",
+                                "이 글이 소개하고자 했던 개념, 해결하고자 했던 문제 등을 하나의 문장으로 정리해보세요."
+                        )
+                )
         val response = SummaryResponse.from(summary, templates)
 
         whenever(summaryService.updateSummary(any(), any(), any())).thenReturn(summary)
@@ -118,12 +132,12 @@ class SummaryControllerTest {
 
         // when & then
         mockMvc.perform(
-            put("/api/summaries/{summaryId}", summaryId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request))
-        )
-            .andExpect(status().isOk)
-            .andExpect(content().json(objectMapper.writeValueAsString(response)))
+                        put("/api/summaries/{summaryId}", summaryId)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isOk)
+                .andExpect(content().json(objectMapper.writeValueAsString(response)))
 
         verify(summaryService).updateSummary(any(), any(), any())
         verify(summaryService).getSummaryTemplates()
@@ -137,19 +151,30 @@ class SummaryControllerTest {
         val userId = 1L
         val bookmark1 = createTestBookmark(1L, userId)
         val bookmark2 = createTestBookmark(2L, userId)
-        val summaryList = listOf(
-            createTestSummary(1L, bookmark1, SummaryContents(listOf(SummaryContentItem(id = 1, content = "Summary 1")))),
-            createTestSummary(2L, bookmark2, SummaryContents(listOf(SummaryContentItem(id = 2, content = "Summary 2"))))
-        )
+        val summaryList =
+                listOf(
+                        createTestSummary(
+                                1L,
+                                bookmark1,
+                                SummaryContents(
+                                        listOf(SummaryContentItem(id = 1, content = "Summary 1"))
+                                )
+                        ),
+                        createTestSummary(
+                                2L,
+                                bookmark2,
+                                SummaryContents(
+                                        listOf(SummaryContentItem(id = 2, content = "Summary 2"))
+                                )
+                        )
+                )
         val response = SummariesResponse.from(summaryList)
         whenever(summaryService.getSummariesByUserId(userId)).thenReturn(summaryList)
 
         // when & then
-        mockMvc.perform(
-            get("/api/summaries")
-        )
-            .andExpect(status().isOk)
-            .andExpect(content().json(objectMapper.writeValueAsString(response)))
+        mockMvc.perform(get("/api/summaries"))
+                .andExpect(status().isOk)
+                .andExpect(content().json(objectMapper.writeValueAsString(response)))
 
         verify(summaryService).getSummariesByUserId(userId)
     }
@@ -164,21 +189,17 @@ class SummaryControllerTest {
         val bookmark = createTestBookmark(bookmarkId, userId)
         val testContentItems = listOf(SummaryContentItem(id = 3, content = "Test summary"))
         val summary = createTestSummary(1L, bookmark, SummaryContents(testContentItems))
-        val templates = listOf(
-            createTestTemplate(3, SummaryTemplateSection.DETAILS, "왜-무엇을-어떻게형", "")
-        )
+        val templates =
+                listOf(createTestTemplate(3, SummaryTemplateSection.DETAILS, "왜-무엇을-어떻게형", ""))
         val response = SummaryResponse.from(summary, templates)
 
         whenever(summaryService.getSummaryByBookmarkId(bookmarkId, userId)).thenReturn(summary)
         whenever(summaryService.getSummaryTemplates()).thenReturn(templates)
 
         // when & then
-        mockMvc.perform(
-            get("/api/summaries")
-                .param("bookmarkId", bookmarkId.toString())
-        )
-            .andExpect(status().isOk)
-            .andExpect(content().json(objectMapper.writeValueAsString(response)))
+        mockMvc.perform(get("/api/summaries").param("bookmarkId", bookmarkId.toString()))
+                .andExpect(status().isOk)
+                .andExpect(content().json(objectMapper.writeValueAsString(response)))
 
         verify(summaryService).getSummaryByBookmarkId(bookmarkId, userId)
         verify(summaryService).getSummaryTemplates()
@@ -193,18 +214,17 @@ class SummaryControllerTest {
 
         // when & then
         mockMvc.perform(
-            post("/api/summaries")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request))
-        )
-            .andExpect(status().isUnauthorized)
+                        post("/api/summaries")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isUnauthorized)
     }
 
     @Test
     @DisplayName("인증 없이 요약 목록 조회를 요청하면 401 에러를 반환한다")
     fun `getSummaries without auth returns 401`() {
         // when & then
-        mockMvc.perform(get("/api/summaries"))
-            .andExpect(status().isUnauthorized)
+        mockMvc.perform(get("/api/summaries")).andExpect(status().isUnauthorized)
     }
 }
