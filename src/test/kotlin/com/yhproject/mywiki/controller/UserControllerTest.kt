@@ -5,6 +5,7 @@ import com.yhproject.mywiki.auth.CustomOAuth2UserService
 import com.yhproject.mywiki.auth.JwtProvider
 import com.yhproject.mywiki.auth.WithMockCustomUser
 import com.yhproject.mywiki.config.SecurityConfig
+import com.yhproject.mywiki.domain.user.UserRepository
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -26,6 +27,8 @@ class UserControllerTest {
     @MockitoBean private lateinit var jwtProvider: JwtProvider
 
     @MockitoBean private lateinit var customOAuth2UserService: CustomOAuth2UserService
+
+    @MockitoBean private lateinit var userRepository: UserRepository
 
     @Test
     @WithMockCustomUser(role = "USER")

@@ -7,6 +7,7 @@ import com.yhproject.mywiki.auth.WithMockCustomUser
 import com.yhproject.mywiki.config.SecurityConfig
 import com.yhproject.mywiki.domain.summary.SummaryTemplate
 import com.yhproject.mywiki.domain.summary.SummaryTemplateSection
+import com.yhproject.mywiki.domain.user.UserRepository
 import com.yhproject.mywiki.dto.SummaryTemplateResponse
 import com.yhproject.mywiki.service.SummaryService
 import org.junit.jupiter.api.DisplayName
@@ -26,46 +27,48 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 @Import(SecurityConfig::class)
 class SummaryTemplateControllerTest {
 
-    @Autowired private lateinit var mockMvc: MockMvc
+        @Autowired private lateinit var mockMvc: MockMvc
 
-    @Autowired private lateinit var objectMapper: ObjectMapper
+        @Autowired private lateinit var objectMapper: ObjectMapper
 
-    @MockitoBean private lateinit var summaryService: SummaryService
+        @MockitoBean private lateinit var summaryService: SummaryService
 
-    @MockitoBean private lateinit var jwtProvider: JwtProvider
+        @MockitoBean private lateinit var jwtProvider: JwtProvider
 
-    @MockitoBean private lateinit var customOAuth2UserService: CustomOAuth2UserService
+        @MockitoBean private lateinit var customOAuth2UserService: CustomOAuth2UserService
 
-    @Test
-    @WithMockCustomUser
-    @DisplayName("요약 템플릿 조회 요청을 보내면 템플릿 목록을 반환한다")
-    fun `getSummaryTemplates returns template list`() {
-        // given
-        val templates =
-                listOf(
-                        SummaryTemplate(
-                                id = 1L,
-                                section = SummaryTemplateSection.BIG_PICTURE,
-                                title = "핵심 파악",
-                                description = "한 문장으로 요약"
+        @MockitoBean private lateinit var userRepository: UserRepository
+
+        @Test
+        @WithMockCustomUser
+        @DisplayName("요약 템플릿 조회 요청을 보내면 템플릿 목록을 반환한다")
+        fun `getSummaryTemplates returns template list`() {
+                // given
+                val templates =
+                        listOf(
+                                SummaryTemplate(
+                                        id = 1L,
+                                        section = SummaryTemplateSection.BIG_PICTURE,
+                                        title = "핵심 파악",
+                                        description = "한 문장으로 요약"
+                                )
                         )
-                )
-        val response = SummaryTemplateResponse.from(templates)
+                val response = SummaryTemplateResponse.from(templates)
 
-        whenever(summaryService.getSummaryTemplates()).thenReturn(templates)
+                whenever(summaryService.getSummaryTemplates()).thenReturn(templates)
 
-        // when & then
-        mockMvc.perform(get("/api/summary-templates"))
-                .andExpect(status().isOk)
-                .andExpect(content().json(objectMapper.writeValueAsString(response)))
+                // when & then
+                mockMvc.perform(get("/api/summary-templates"))
+                        .andExpect(status().isOk)
+                        .andExpect(content().json(objectMapper.writeValueAsString(response)))
 
-        verify(summaryService).getSummaryTemplates()
-    }
+                verify(summaryService).getSummaryTemplates()
+        }
 
-    @Test
-    @DisplayName("인증 없이 요약 템플릿 조회를 요청하면 401 에러를 반환한다")
-    fun `getSummaryTemplates without auth returns 401`() {
-        // when & then
-        mockMvc.perform(get("/api/summary-templates")).andExpect(status().isUnauthorized)
-    }
+        @Test
+        @DisplayName("인증 없이 요약 템플릿 조회를 요청하면 401 에러를 반환한다")
+        fun `getSummaryTemplates without auth returns 401`() {
+                // when & then
+                mockMvc.perform(get("/api/summary-templates")).andExpect(status().isUnauthorized)
+        }
 }

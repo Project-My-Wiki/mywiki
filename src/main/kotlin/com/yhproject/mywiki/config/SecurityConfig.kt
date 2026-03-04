@@ -4,6 +4,7 @@ import com.yhproject.mywiki.auth.CustomOAuth2UserService
 import com.yhproject.mywiki.auth.JwtAuthenticationFilter
 import com.yhproject.mywiki.auth.JwtProvider
 import com.yhproject.mywiki.auth.PrincipalDetails
+import com.yhproject.mywiki.domain.user.UserRepository
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -23,6 +24,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 class SecurityConfig(
         private val customOAuth2UserService: CustomOAuth2UserService,
         private val jwtProvider: JwtProvider,
+        private val userRepository: UserRepository,
         @Value("\${app.oauth2.redirect-uri}") private val redirectUri: String,
         @Value("\${app.cors.allowed-origins}") private val allowedOrigins: String
 ) {
@@ -52,7 +54,7 @@ class SecurityConfig(
                             .authenticated()
                 }
                 .addFilterBefore(
-                        JwtAuthenticationFilter(jwtProvider),
+                        JwtAuthenticationFilter(jwtProvider, userRepository),
                         UsernamePasswordAuthenticationFilter::class.java
                 )
                 .logout { it.logoutSuccessUrl("/") }
@@ -88,13 +90,7 @@ class SecurityConfig(
     fun oauth2LoginSuccessHandler(): AuthenticationSuccessHandler {
         return AuthenticationSuccessHandler { _, response, authentication ->
             val principal = authentication.principal as PrincipalDetails
-            val token =
-                    jwtProvider.generateToken(
-                            id = principal.user.id,
-                            name = principal.user.name,
-                            email = principal.user.email,
-                            role = principal.user.role.key
-                    )
+            val token = jwtProvider.generateToken(principal.user.id)
             response.sendRedirect("$redirectUri?token=$token")
         }
     }
