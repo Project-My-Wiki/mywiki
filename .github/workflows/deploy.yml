@@ -49,6 +49,7 @@ jobs:
           echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" >> .env
           echo "OAUTH2_REDIRECT_URI=${{ vars.OAUTH2_REDIRECT_URI }}" >> .env
           echo "CORS_ALLOWED_ORIGINS=${{ vars.CORS_ALLOWED_ORIGINS }}" >> .env
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
 
       - name: Prepare remote directory
         uses: appleboy/ssh-action@v1

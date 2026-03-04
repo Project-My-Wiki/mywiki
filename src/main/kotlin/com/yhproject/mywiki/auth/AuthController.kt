@@ -45,13 +45,7 @@ class AuthController(
                                 )
                 val savedUser = userRepository.save(user)
 
-                val jwtToken =
-                        jwtProvider.generateToken(
-                                id = savedUser.id,
-                                name = savedUser.name,
-                                email = savedUser.email,
-                                role = savedUser.role.key
-                        )
+                val jwtToken = jwtProvider.generateToken(savedUser.id)
 
                 return ResponseEntity.ok(LoginResponse(jwtToken))
         }

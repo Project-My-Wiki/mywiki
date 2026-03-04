@@ -1,5 +1,9 @@
 package com.yhproject.mywiki.auth
 
+import com.yhproject.mywiki.domain.user.Role
+import com.yhproject.mywiki.domain.user.User
+import com.yhproject.mywiki.domain.user.UserRepository
+import io.jsonwebtoken.Jwts
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -15,12 +19,14 @@ import org.springframework.security.core.context.SecurityContextHolder
 class JwtAuthenticationFilterTest {
 
     private lateinit var jwtProvider: JwtProvider
+    private lateinit var userRepository: UserRepository
     private lateinit var jwtAuthenticationFilter: JwtAuthenticationFilter
 
     @BeforeEach
     fun setUp() {
         jwtProvider = mock(JwtProvider::class.java)
-        jwtAuthenticationFilter = JwtAuthenticationFilter(jwtProvider)
+        userRepository = mock(UserRepository::class.java)
+        jwtAuthenticationFilter = JwtAuthenticationFilter(jwtProvider, userRepository)
         SecurityContextHolder.clearContext()
     }
 
@@ -40,16 +46,21 @@ class JwtAuthenticationFilterTest {
         val validToken = "valid.jwt.token"
         request.addHeader("Authorization", "Bearer $validToken")
 
-        val claims =
-                io.jsonwebtoken.Jwts.claims()
-                        .subject("1")
-                        .add("name", "Test User")
-                        .add("email", "test@example.com")
-                        .add("role", "ROLE_USER")
-                        .build()
+        val claims = Jwts.claims().subject("1").build()
+
+        val stubUser =
+                User(
+                        id = 1L,
+                        name = "Test User",
+                        email = "test@example.com",
+                        role = Role.USER,
+                        provider = "google",
+                        providerId = "12345"
+                )
 
         `when`(jwtProvider.validateToken(validToken)).thenReturn(true)
         `when`(jwtProvider.getClaims(validToken)).thenReturn(claims)
+        `when`(userRepository.findById(1L)).thenReturn(stubUser)
 
         // when
         jwtAuthenticationFilter.doFilter(request, response, filterChain)
@@ -93,6 +104,31 @@ class JwtAuthenticationFilterTest {
         request.addHeader("Authorization", "Bearer $invalidToken")
 
         `when`(jwtProvider.validateToken(invalidToken)).thenReturn(false)
+
+        // when
+        jwtAuthenticationFilter.doFilter(request, response, filterChain)
+
+        // then
+        val auth = SecurityContextHolder.getContext().authentication
+        assertThat(auth).isNull()
+    }
+
+    @Test
+    @DisplayName("토큰은 유효하지만 DB에서 사용자를 찾을 수 없으면 SecurityContext는 비어 있는다")
+    fun `valid token but user not found leaves security context empty`() {
+        // given
+        val request = MockHttpServletRequest()
+        val response = MockHttpServletResponse()
+        val filterChain = MockFilterChain()
+
+        val validToken = "valid.jwt.token"
+        request.addHeader("Authorization", "Bearer $validToken")
+
+        val claims = Jwts.claims().subject("999").build()
+
+        `when`(jwtProvider.validateToken(validToken)).thenReturn(true)
+        `when`(jwtProvider.getClaims(validToken)).thenReturn(claims)
+        `when`(userRepository.findById(999L)).thenReturn(null)
 
         // when
         jwtAuthenticationFilter.doFilter(request, response, filterChain)

@@ -16,15 +16,12 @@ class JwtProvider(
 ) {
     private val key: SecretKey = Keys.hmacShaKeyFor(secretKey.toByteArray(StandardCharsets.UTF_8))
 
-    fun generateToken(id: Long, name: String, email: String, role: String): String {
+    fun generateToken(userId: Long): String {
         val now = Date()
         val expiryDate = Date(now.time + expirationMs)
 
         return Jwts.builder()
-                .subject(id.toString())
-                .claim("name", name)
-                .claim("email", email)
-                .claim("role", role)
+                .subject(userId.toString())
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(key)

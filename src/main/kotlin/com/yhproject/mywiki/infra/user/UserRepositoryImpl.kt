@@ -9,6 +9,10 @@ class UserRepositoryImpl(
     private val jpaRepository: UserJpaRepository
 ) : UserRepository {
 
+    override fun findById(id: Long): User? {
+        return jpaRepository.findById(id).orElse(null)
+    }
+
     override fun findByEmail(email: String): User? {
         return jpaRepository.findByEmail(email).orElse(null)
     }

@@ -22,29 +22,27 @@ class JwtProviderTest {
     @DisplayName("JWT 토큰 생성 및 파싱 테스트")
     fun `generate and parse token`() {
         // given
-        val id = 1L
-        val name = "Test User"
-        val email = "test@example.com"
-        val role = "USER"
+        val userId = 1L
 
         // when
-        val token = jwtProvider.generateToken(id, name, email, role)
+        val token = jwtProvider.generateToken(userId)
 
         // then
         assertThat(token).isNotBlank()
 
         val claims = jwtProvider.getClaims(token)
-        assertThat(claims.subject).isEqualTo(id.toString())
-        assertThat(claims.get("name", String::class.java)).isEqualTo(name)
-        assertThat(claims.get("email", String::class.java)).isEqualTo(email)
-        assertThat(claims.get("role", String::class.java)).isEqualTo(role)
+        assertThat(claims.subject).isEqualTo(userId.toString())
+        // 개인정보 클레임이 포함되지 않아야 한다
+        assertThat(claims["name"]).isNull()
+        assertThat(claims["email"]).isNull()
+        assertThat(claims["role"]).isNull()
     }
 
     @Test
     @DisplayName("유효한 JWT 토큰 검증 테스트")
     fun `validate valid token`() {
         // given
-        val token = jwtProvider.generateToken(1L, "Test User", "test@example.com", "USER")
+        val token = jwtProvider.generateToken(1L)
 
         // when
         val isValid = jwtProvider.validateToken(token)
@@ -57,7 +55,7 @@ class JwtProviderTest {
     @DisplayName("잘못된 형식의 서명을 가진 토큰 검증 실패 테스트")
     fun `validate invalid signature token`() {
         // given
-        val token = jwtProvider.generateToken(1L, "Test User", "test@example.com", "USER")
+        val token = jwtProvider.generateToken(1L)
         val invalidToken = token + "invalid"
 
         // when
@@ -73,7 +71,7 @@ class JwtProviderTest {
         // given
         // 만료 시간을 0ms로 설정하여 즉시 만료되는 프로바이더 생성
         val expiredJwtProvider = JwtProvider(secretKeyString, 0)
-        val token = expiredJwtProvider.generateToken(1L, "Test User", "test@example.com", "USER")
+        val token = expiredJwtProvider.generateToken(1L)
 
         // 만료된 토큰은 validateToken 에서 false를 반환해야 합니다.
         // when
