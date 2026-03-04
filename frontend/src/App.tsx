@@ -1,8 +1,8 @@
 import React from 'react';
-import {createBrowserRouter, Outlet, RouterProvider} from 'react-router-dom';
+import { createBrowserRouter, Outlet, RouterProvider } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
 import MainPage from "./pages/MainPage";
-import {AuthProvider} from "./contexts/AuthContext";
+import { AuthProvider } from "./contexts/AuthContext";
 import PrivateRoute from "./components/common/PrivateRoute";
 import AddBookmarkPage from "./pages/AddBookmarkPage";
 import BookmarkListPage from "./pages/BookmarkListPage";
@@ -10,6 +10,7 @@ import BookmarkDetailPage from "./pages/BookmarkDetailPage";
 import SummaryDetailPage from "./pages/SummaryDetailPage";
 import SummaryListPage from "./pages/SummaryListPage";
 import SummaryFormPage from "./pages/SummaryFormPage";
+import OAuthCallbackPage from "./pages/OAuthCallbackPage";
 
 const AppLayout = () => (
     <AuthProvider>
@@ -30,12 +31,13 @@ const router = createBrowserRouter([
             { path: "/summaries/:id", element: <PrivateRoute><SummaryDetailPage /></PrivateRoute> },
             { path: "/summaries/:id/edit", element: <PrivateRoute><SummaryFormPage /></PrivateRoute> },
             { path: "/login", element: <LoginPage /> },
+            { path: "/callback", element: <OAuthCallbackPage /> },
         ]
     }
 ]);
 
 function App() {
-  return <RouterProvider router={router} />;
+    return <RouterProvider router={router} />;
 }
 
 export default App;

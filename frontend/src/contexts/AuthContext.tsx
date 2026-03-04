@@ -1,41 +1,32 @@
-import React, {createContext, ReactNode, useContext, useEffect, useState} from 'react';
-import {apiClient} from '../api/apiClient';
-import {useLocation} from "react-router-dom";
+import React, { createContext, ReactNode, useCallback, useContext, useState } from 'react';
 
 interface AuthContextType {
     isAuthenticated: boolean;
     isLoading: boolean;
+    login: (token: string) => void;
+    logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
-    const location = useLocation();
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(
+        () => !!localStorage.getItem('token')
+    );
+    const [isLoading] = useState(false);
 
-    useEffect(() => {
-        const checkAuthStatus = async () => {
-            try {
-                await apiClient.get('/api/user/me');
-                setIsAuthenticated(true);
-            } catch (error) {
-                setIsAuthenticated(false);
-            } finally {
-                setIsLoading(false);
-            }
-        };
+    const login = useCallback((token: string) => {
+        localStorage.setItem('token', token);
+        setIsAuthenticated(true);
+    }, []);
 
-        if (location.pathname === '/login') {
-            setIsAuthenticated(false);
-            setIsLoading(false);
-        } else {
-            checkAuthStatus();
-        }
-    }, [location.pathname]);
+    const logout = useCallback(() => {
+        localStorage.removeItem('token');
+        setIsAuthenticated(false);
+    }, []);
 
     return (
-        <AuthContext.Provider value={{ isAuthenticated, isLoading }}>
+        <AuthContext.Provider value={{ isAuthenticated, isLoading, login, logout }}>
             {children}
         </AuthContext.Provider>
     );
