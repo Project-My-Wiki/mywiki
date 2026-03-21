@@ -24,6 +24,7 @@ class SecurityConfig(
     @Bean
     fun filterChain(http: HttpSecurity): SecurityFilterChain {
         http
+<<<<<<< Updated upstream
             .cors { it.configurationSource(corsConfigurationSource()) }
             .csrf { it.disable() }
             .headers { it.frameOptions { frameOptions -> frameOptions.disable() } }
@@ -37,6 +38,31 @@ class SecurityConfig(
             .oauth2Login { oauth2 ->
                 oauth2.userInfoEndpoint { userInfo ->
                     userInfo.userService(customOAuth2UserService)
+=======
+                .cors { it.configurationSource(corsConfigurationSource()) }
+                .csrf { it.disable() }
+                .headers { it.frameOptions { frameOptions -> frameOptions.disable() } }
+                .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
+                .authorizeHttpRequests {
+                    it.requestMatchers(
+                                    "/",
+                                    "/css/**",
+                                    "/images/**",
+                                    "/js/**",
+                                    "/h2-console/**",
+                                    "/error",
+                                    "/actuator/**",
+                                    "/api/auth/login",
+                                    "/v3/api-docs/**",
+                                    "/swagger-ui.html",
+                                    "/swagger-ui/**"
+                            )
+                            .permitAll()
+                            .requestMatchers("/api/**")
+                            .hasRole("USER")
+                            .anyRequest()
+                            .authenticated()
+>>>>>>> Stashed changes
                 }
                 oauth2.successHandler(oauth2LoginSuccessHandler())
             }

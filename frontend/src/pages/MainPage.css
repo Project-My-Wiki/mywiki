@@ -1,6 +1,6 @@
-
 .main-logo {
     width: 160px;
+    margin-bottom: 24px;
 }
 
 .main-page-content {
@@ -9,20 +9,23 @@
     align-items: center;
     justify-content: center;
     text-align: center;
-    height: calc(100vh - 120px); /* 전체 높이에서 헤더와 푸터 높이를 뺀 값 */
+    height: calc(100vh - 140px);
 }
 
 .main-page-content h3 {
-    font-size: 24px;
-    font-weight: bold;
-    color: #333;
+    font-size: 28px;
+    font-family: 'GMarketSans', sans-serif;
+    font-weight: 700;
+    color: var(--font-color-heading);
     margin-bottom: 16px;
+    letter-spacing: -0.5px;
 }
 
 .main-page-content p {
     font-size: 16px;
-    color: #666;
-    margin-bottom: 32px;
+    color: var(--font-color-muted);
+    margin-bottom: 40px;
+    line-height: 1.6;
 }
 
 .main-page-buttons {
@@ -43,6 +46,6 @@
 
 .main-page-btn {
     width: 100%;
-    padding: 12px;
+    padding: 14px;
     font-size: 16px;
 }

@@ -21,6 +21,13 @@ data class OAuthAttributes(
         )
     }
 
+    fun toUserInfo(): OAuthUserInfo = OAuthUserInfo(
+        provider = provider,
+        providerId = providerId,
+        email = email,
+        name = name
+    )
+
     companion object {
         fun of(registrationId: String, userNameAttributeName: String, attributes: Map<String, Any>): OAuthAttributes {
             return when (registrationId) {

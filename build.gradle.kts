@@ -36,6 +36,9 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
 
+    // Google ID Token 검증
+    implementation("com.google.api-client:google-api-client:2.5.0")
+
     // database
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     runtimeOnly("com.mysql:mysql-connector-j")
@@ -46,6 +49,9 @@ dependencies {
 
     // logging
     implementation("io.github.oshai:kotlin-logging-jvm:7.0.13")
+
+    // openapi
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test")

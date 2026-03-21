@@ -1,5 +1,6 @@
 .login-logo {
     width: 160px;
+    margin-bottom: 24px;
 }
 
 .login-page-content {
@@ -8,20 +9,23 @@
     align-items: center;
     justify-content: center;
     text-align: center;
-    height: calc(100vh - 120px); /* 전체 높이에서 헤더와 푸터 높이를 뺀 값 */
+    height: calc(100vh - 140px);
 }
 
 .login-page-content h3 {
-    font-size: 24px;
-    font-weight: bold;
-    color: #333;
+    font-size: 28px;
+    font-family: 'GMarketSans', sans-serif;
+    font-weight: 700;
+    color: var(--font-color-heading);
     margin-bottom: 16px;
+    letter-spacing: -0.5px;
 }
 
 .login-page-content p {
     font-size: 16px;
-    color: #666;
-    margin-bottom: 32px;
+    color: var(--font-color-muted);
+    margin-bottom: 40px;
+    line-height: 1.6;
 }
 
 .google-login-btn {
@@ -29,12 +33,38 @@
     align-items: center;
     justify-content: center;
     width: 250px;
-    padding: 12px;
+    padding: 14px;
     font-size: 16px;
+    font-weight: 600;
+    /* 버튼 배경을 메인 로열 퍼플로 변경 */
+    background-color: var(--point-color-main);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    /* 사용자 정의 보라색 톤에 맞춘 자연스러운 입체 그림자 */
+    box-shadow: 0 4px 0 rgba(63, 0, 153, 0.4), 0 8px 15px rgba(99, 36, 189, 0.2);
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+}
+
+/* 터치 디바이스가 아닌 데스크탑 환경에서만 호버 효과 적용 */
+@media (hover: hover) {
+    .google-login-btn:hover {
+        background-color: var(--point-color-sub);
+        /* 호버 시 아주 약간 밝은 퍼플 */
+        box-shadow: 0 4px 0 rgba(135, 72, 225, 0.5), 0 10px 20px rgba(135, 72, 225, 0.3);
+    }
+}
+
+.google-login-btn:active {
+    /* 눌렀을 때 버튼이 실제로 아래로 들어가는 물리적인 효과 (모바일 최적화) */
+    transform: translateY(4px);
+    background-color: var(--point-color-active);
+    box-shadow: 0 0 0 rgba(63, 0, 153, 0.4), 0 2px 4px rgba(99, 36, 189, 0.2);
 }
 
 .google-icon {
-    margin-right: 10px;
+    margin-right: 12px;
     width: 20px;
     height: 20px;
 }

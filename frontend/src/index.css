@@ -1,3 +1,5 @@
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
+
 @font-face {
   font-family: 'GMarketSans';
   src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansMedium.woff') format('woff');
@@ -5,18 +7,40 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: 'GMarketSans';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansBold.woff') format('woff');
+  font-weight: 700;
+  font-display: swap;
+}
+
 :root {
-  --background-start-color: #E2E2F1;
-  --background-end-color: #D2D3EA;
-  --point-color-main: #4b4c9d;
-  --point-color-sub: #a5a6d9;
-  --point-color-light: #e8e8f7;
-  --point-color-active: #3a3b7b;
-  --font-color-main: #333333;
-  --font-color-point: #4b4c9d;
+  /* Background gradient (Vibrant/Premium) */
+  --background-start-color: #EEF2FF;
+  --background-end-color: #E0E7FF;
+
+  /* Primary colors - Defined by User */
+  --point-color-main: #6324BD;
+  /* 기본 상태: 적당히 선명하면서 깊이 있는 보라색 */
+  --point-color-sub: #8748E1;
+  /* Hover 상태: 기본 상태보다 약간 밝아지는 보라색 */
+  --point-color-light: #F3E8FF;
+  /* 배경용: 기존 톤과 어울리는 아주 옅은 보라색 */
+  --point-color-active: #3F0099;
+  /* Active 상태: 가장 어둡고 묵직한 보라색 */
+
+  /* Typography Colors */
+  --font-color-heading: #111827;
+  --font-color-body: #374151;
+  --font-color-muted: #6B7280;
+
+  /* Typography */
   --font-h1: 32px;
   --font-h2: 24px;
   --font-body: 16px;
+  --font-caption: 14px;
+
+  /* Spacing */
   --spacing-unit: 8px;
 }
 
@@ -24,21 +48,43 @@ body {
   margin: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: linear-gradient(to bottom right, var(--background-start-color), var(--background-end-color));
-  color: var(--font-color-main);
+  background: linear-gradient(135deg, var(--background-start-color), var(--background-end-color));
+  background-attachment: fixed;
+  color: var(--font-color-body);
   line-height: 1.6;
   min-height: 100vh;
+  /* Dual Font System: Use Pretendard as default body font */
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
 
 * {
-  font-family: 'GMarketSans', sans-serif;
+  box-sizing: border-box;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
-h2, h3 {
-  color: #3a3b7b;
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'GMarketSans', sans-serif;
+  color: var(--font-color-heading);
+  margin-top: 0;
+}
+
+h1 {
+  font-weight: 700;
+}
+
+h2 {
+  font-size: var(--font-h2);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
 }
