@@ -6,6 +6,8 @@ import logo from '../assets/logo.png';
 import './LoginPage.css';
 
 const LoginPage: React.FC = () => {
+    const loginFailed = new URLSearchParams(window.location.search).has('error');
+
     const handleLogin = () => {
         const baseUrl = process.env.REACT_APP_API_BASE_URL || '';
         window.location.href = `${baseUrl}/oauth2/authorization/google`;
@@ -17,6 +19,11 @@ const LoginPage: React.FC = () => {
                 <img src={logo} alt="mywiki logo" className="login-logo" />
                 <h2>mywiki에 오신 것을 환영합니다!</h2>
                 <p>오늘은 어떤 지식을 쌓아볼까요?</p>
+                {loginFailed && (
+                    <p className="login-error" role="alert">
+                        Google 로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.
+                    </p>
+                )}
                 <Button onClick={handleLogin} className="google-login-btn">
                     <img src={GoogleIcon} alt="Google icon" className="google-icon" />
                     <span>구글 계정으로 시작</span>

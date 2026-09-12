@@ -24,6 +24,11 @@
     margin-bottom: 32px;
 }
 
+.login-page-content .login-error {
+    color: #b42318;
+    margin-top: 0;
+}
+
 .google-login-btn {
     display: flex;
     align-items: center;

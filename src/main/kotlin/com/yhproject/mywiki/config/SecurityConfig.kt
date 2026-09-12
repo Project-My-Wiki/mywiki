@@ -5,6 +5,8 @@ import com.yhproject.mywiki.auth.JwtAuthenticationFilter
 import com.yhproject.mywiki.auth.JwtProvider
 import com.yhproject.mywiki.auth.PrincipalDetails
 import com.yhproject.mywiki.domain.user.UserRepository
+import java.net.URI
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -14,6 +16,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler
+import org.springframework.security.web.authentication.AuthenticationFailureHandler
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
@@ -28,6 +31,7 @@ class SecurityConfig(
         @Value("\${app.oauth2.redirect-uri}") private val redirectUri: String,
         @Value("\${app.cors.allowed-origins}") private val allowedOrigins: String
 ) {
+    private val logger = LoggerFactory.getLogger(SecurityConfig::class.java)
 
     @Bean
     fun filterChain(http: HttpSecurity): SecurityFilterChain {
@@ -63,6 +67,7 @@ class SecurityConfig(
                         userInfo.userService(customOAuth2UserService)
                     }
                     oauth2.successHandler(oauth2LoginSuccessHandler())
+                    oauth2.failureHandler(oauth2LoginFailureHandler())
                 }
                 .exceptionHandling { handler ->
                     handler.defaultAuthenticationEntryPointFor(
@@ -92,6 +97,14 @@ class SecurityConfig(
             val principal = authentication.principal as PrincipalDetails
             val token = jwtProvider.generateToken(principal.user.id)
             response.sendRedirect("$redirectUri?token=$token")
+        }
+    }
+
+    @Bean
+    fun oauth2LoginFailureHandler(): AuthenticationFailureHandler {
+        return AuthenticationFailureHandler { _, response, exception ->
+            logger.error("Google OAuth login failed", exception)
+            response.sendRedirect(URI.create(redirectUri).resolve("/login?error=oauth_failed").toString())
         }
     }
 }

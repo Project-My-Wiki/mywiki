@@ -48,4 +48,12 @@ class SecurityTest {
             .andExpect(status().is3xxRedirection)
             .andExpect(redirectedUrl("/"))
     }
+
+    @Test
+    @DisplayName("Google OAuth 인증 실패 시 프론트엔드 로그인 페이지로 돌아간다")
+    fun `oauth failure redirects to frontend login page`() {
+        mockMvc.perform(get("/login/oauth2/code/google").param("error", "access_denied"))
+            .andExpect(status().is3xxRedirection)
+            .andExpect(redirectedUrl("http://localhost:3000/login?error=oauth_failed"))
+    }
 }

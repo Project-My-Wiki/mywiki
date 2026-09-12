@@ -15,6 +15,23 @@ My Wiki는 여러분이 웹 서핑 중 발견한 유용한 아티클이나 블�
 
 ---
 
+## 로컬 실행과 Google 로그인 설정
+
+JDK 21, Node.js, Docker가 필요합니다. Google Cloud Console에서 **웹 애플리케이션** OAuth 클라이언트를 만들고 승인된 리디렉션 URI에 `http://localhost:8080/login/oauth2/code/google`을 등록하세요. 배포 환경에서는 `https://my-wiki.kro.kr/login/oauth2/code/google`을 등록해야 합니다. 이 URI는 Google이 백엔드로 돌려보내는 주소이며, 로그인 완료 후 프론트엔드로 이동하는 `OAUTH2_REDIRECT_URI`와 다릅니다.
+
+```bash
+docker compose up -d
+export GOOGLE_CLIENT_ID='발급받은 클라이언트 ID'
+export GOOGLE_CLIENT_SECRET='발급받은 클라이언트 보안 비밀'
+bash ./gradlew bootRun
+```
+
+별도 터미널에서 `cd frontend && npm ci && npm start`를 실행한 뒤 `http://localhost:3000`으로 접속하세요. 로컬 프론트엔드는 `frontend/.env.development`의 `REACT_APP_API_BASE_URL=http://localhost:8080`을 사용합니다. Google OAuth 동의 화면이 테스트 모드라면 로그인할 계정을 테스트 사용자로 추가해야 합니다.
+
+로그인 후 `/login?error`로 돌아온다면 백엔드 콘솔이나 `logs/spring.log`에서 `Google OAuth login failed` 메시지와 원인 예외를 확인하세요. Google 클라이언트 ID/보안 비밀, 위 리디렉션 URI, MySQL 연결을 먼저 점검하면 원인을 좁힐 수 있습니다.
+
+---
+
 ## 🤔 My Wiki는 어떤 서비스인가요?
 
 My Wiki는 정보의 홍수 속에서 핵심만 명확하게 파악하고, 장기 기억으로 전환할 수 있도록 설계되었습니다.
